@@ -1,23 +1,8 @@
-import requests
 from rest_framework.test import APITestCase
 from rest_framework import status as st
 from .tools import jira_connect
-from .serializers import BoardsSerializer, ProjectSerializer
-
-DOMAIN = 'http://127.0.0.1:8080'
-
-
-def send_request(url, method="GET", data=None, permission=''):
-    if method == "GET":
-        return requests.get(f'{DOMAIN}{url}')
-
-    if method == "POST":
-        return requests.post(f'{DOMAIN}{url}', data=data)
-    if method == "DELETE":
-        return requests.delete(f'{DOMAIN}{url}', data=data)
-
-    if method == "PATCH":
-        return requests.patch(f'{DOMAIN}{url}', data=data)
+from .serializers import BoardsSerializer, ProjectSerializer, BoardSerializer, IssueSerializer
+from .utils import send_request
 
 
 class ProjectViewTest(APITestCase):
@@ -36,7 +21,6 @@ class ProjectViewTest(APITestCase):
 class BoardsListTest(APITestCase):
 
     def test_list_boards(self):
-
         self.test_list_boards = jira_connect.boards()
         serializer = BoardsSerializer(self.test_list_boards)
 
@@ -46,3 +30,68 @@ class BoardsListTest(APITestCase):
         self.assertEqual(st.HTTP_200_OK, response.status_code)
         self.assertEqual(response.json(), serializer.data)
 
+
+class BoardDetailTest(APITestCase):
+
+    def test_detail_board(self):
+        self.test_board_id = 31
+        self.board = jira_connect.board(self.test_board_id)
+        serializer = BoardSerializer(self.board)
+
+        response = send_request(f'/api/v1/boards/{self.test_board_id}',
+                                method="GET")
+
+        self.assertEqual(st.HTTP_200_OK, response.status_code)
+        self.assertEqual(response.json(), serializer.data)
+
+
+class IssuesListTest(APITestCase):
+
+    def test_list_issues(self):
+        self.test_board_id = 31
+        self.issues = jira_connect.issues_by_board(self.test_board_id)
+        serializer = IssueSerializer(instance=self.issues, many=True)
+
+        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/',
+                                method="GET")
+
+        self.assertEqual(st.HTTP_200_OK, response.status_code)
+        self.assertEqual(response.json(), serializer.data)
+
+
+class IssuesRecordTest(APITestCase):
+
+    def test_list_issues(self):
+        self.test_board_id = 31
+        self.issues = jira_connect.issues_by_board(self.test_board_id)
+
+        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/',
+                                method="POST")
+
+        self.assertEqual(st.HTTP_200_OK, response.status_code)
+
+
+class DateFilteredRecordTest(APITestCase):
+
+    def test_filtered_list_issues(self):
+        self.test_jql = '?date-start=2019-07-22&date-end=2019-07-24'
+        self.test_board_id = 31
+        self.issues = jira_connect.issues_by_board(self.test_board_id)
+
+        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/{self.test_jql}',
+                                method="POST")
+
+        self.assertEqual(st.HTTP_200_OK, response.status_code)
+
+
+class TypeFilteredRecordTest(APITestCase):
+
+    def test_filtered_list_issues(self):
+        self.test_jql = '?issue-type=story'
+        self.test_board_id = 31
+        self.issues = jira_connect.issues_by_board(self.test_board_id)
+
+        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/{self.test_jql}',
+                                method="POST")
+
+        self.assertEqual(st.HTTP_200_OK, response.status_code)
