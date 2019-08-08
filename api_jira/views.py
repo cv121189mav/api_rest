@@ -1,25 +1,35 @@
 from django.http import Http404
-from rest_framework.response import Response
 from rest_framework import viewsets
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from . import tools
-from .serializers import BoardsSerializer, BoardSerializer, IssueSerializer
+from .serializers import BoardsSerializer, BoardSerializer, IssueSerializer, WorkSheetSerializer, ProjectSerializer
+from .tasks import record_data
+import datetime
+from rest_framework import status as st
 
 
 class ProjectView(APIView):
 
+    # get project by id
     def get(self, request, pk):
-        project = tools.jira_connect.project(pk)
-        return Response(data=project.raw)
+        try:
+            project = tools.jira_connect.project(pk)
+            serializer = ProjectSerializer(project)
+            return Response(serializer.data, status=st.HTTP_200_OK)
+        except Exception as error:
+            return Response(error.args.__getitem__(1))
 
 
 class BoardsViewSet(viewsets.ViewSet):
 
+    # get list of boards
     def list(self, request):
         boards = tools.jira_connect.boards()
         serializer = BoardsSerializer(instance=boards)
         return Response(serializer.data)
 
+    # get detail of board by id
     def retrieve(self, request, pk):
         instance = tools.jira_connect.board(boardKeyOrId=pk)
         # todo jira crutch
@@ -30,37 +40,62 @@ class BoardsViewSet(viewsets.ViewSet):
 
 
 class IssuesViewSet(APIView):
+    jql = ''
 
+    def filters(self):
+        self.type_filter()
+        self.date_filter()
+
+    def type_filter(self):
+        issue_type = self.request.query_params.get('issue-type', None)
+
+        issues_types = tools.get_types_issues()
+
+        if issue_type in issues_types:
+            self.jql = tools.add_to_jql(self.jql, 'issuetype=%s' % issue_type)
+
+    def date_filter(self):
+        start = self.request.query_params.get('date-start', None)
+
+        end = self.request.query_params.get('date-end', None)
+        if end:
+            end = datetime.date(int(end.split('-')[0]), int(end.split('-')[1]),
+                                int(end.split('-')[2])) + datetime.timedelta(days=1)
+
+        if start is not None:
+            self.jql = tools.add_to_jql(self.jql, 'created>=%s' % start)
+        if end is not None:
+            self.jql = tools.add_to_jql(self.jql, 'created<=%s' % end)
+
+    # get list of issues (filtered or all)
     def get(self, request, pk):
-        issue_type = request.query_params.get('issue-type', None)
-        start = request.query_params.get('start-from', None)
-        end = request.query_params.get('end-to', None)
-        issues = tools.jira_connect.issues_by_board(pk)
+        self.filters()
+        try:
+            issues = tools.jira_connect.issues_by_board(pk, jql=self.jql)
+            serializer = IssueSerializer(instance=issues, many=True)
+            return Response(serializer.data)
 
-        if issue_type:
-            issues = tools.type_filter(pk, issue_type)
+        except Exception as error:
+            return Response(error.args.__getitem__(1))
 
-        elif start or end:
-            issues = tools.date_filter(pk, start, end)
-
-        serializer = IssueSerializer(instance=issues, many=True)
-
-        return Response(serializer.data)
-
+    # record list of issues (filtered or all)
     def post(self, request, pk):
+        self.filters()
+        try:
+            issues = tools.jira_connect.issues_by_board(pk, jql=self.jql)
+            serializer = IssueSerializer(instance=issues, many=True)
 
-        issue_type = request.query_params.get('issue-type', None)
+            # add tab sheet
+            tab_sheet = tools.add_tab_sheet(pk)
+            serializer_tab_sheet = WorkSheetSerializer(instance=tab_sheet)
 
-        start = request.query_params.get('start-from', None)
-        end = request.query_params.get('end-to', None)
+            # record data using celery tasks
+            record_data.delay(serializer.data, tab_sheet.id)
 
-        issues = tools.jira_connect.issues_by_board(pk)
+            # create url of tab sheet
+            tab_url = '%s/edit#gid=%d' % (tools.sheet.url, tab_sheet.id)
 
-        if issue_type:
-            issues = tools.type_filter(pk, issue_type)
+            return Response({'link': tab_url, 'sheet': serializer_tab_sheet.data, 'issues': serializer.data})
 
-        elif start or end:
-            issues = tools.date_filter(pk, start, end)
-
-        tools.record_data(issues, pk)
-        return Response({'status': 'recorded'})
+        except Exception as error:
+            return Response(error.args.__getitem__(1))
