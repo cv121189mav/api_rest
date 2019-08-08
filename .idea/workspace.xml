@@ -2,17 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9ba057c0-f10e-453a-8ebb-bd55d691dcaa" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api_jira/celery.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api_jira/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_jira/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api_jira/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_jira/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api_jira/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_jira/tasks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api_jira/tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_jira/tests.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api_jira/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_jira/tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api_jira/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_jira/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_project/celery.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_project/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_project/settings.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -133,7 +124,7 @@
       <workItem from="1565111429687" duration="6425000" />
       <workItem from="1565163266053" duration="30859000" />
       <workItem from="1565202480279" duration="11420000" />
-      <workItem from="1565249289096" duration="14063000" />
+      <workItem from="1565249289096" duration="15292000" />
     </task>
     <servers />
   </component>
