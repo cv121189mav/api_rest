@@ -6,7 +6,6 @@ from jira.resources import Board, GreenHopperResource
 
 class JIRA(JIRA):
     def issues_by_board(self, board_id, jql=None):
-        print(jql)
         params = {}
         if jql:
             params['jql'] = jql
@@ -46,8 +45,7 @@ class JIRA(JIRA):
             r_json = self._get_json('rapidviews/list', base=self.AGILE_BASE_URL)
             boards = [Board(self._options, self._session, raw_boards_json) for raw_boards_json in r_json['views']]
             return ResultList(boards, 0, len(boards), len(boards), True)
-        else:
-            return self._fetch_pages(Board, 'values', 'board', startAt, maxResults, params, base=self.AGILE_BASE_URL)
+        return self._fetch_pages(Board, 'values', 'board', startAt, maxResults, params, base=self.AGILE_BASE_URL)
 
     @translate_resource_args
     def board(self, boardKeyOrId):

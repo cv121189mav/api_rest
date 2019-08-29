@@ -1,5 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status as st
+
+from api_jira import tools
 from .tools import jira_connect
 from .serializers import BoardsSerializer, ProjectSerializer, BoardSerializer, IssueSerializer
 from .utils import send_request
@@ -74,12 +76,18 @@ class IssuesRecordTest(APITestCase):
 class DateFilteredRecordTest(APITestCase):
 
     def test_filtered_list_issues(self):
-        self.test_jql = '?date-start=2019-07-22&date-end=2019-07-24'
+        self.date_start = '2019-07-19'
+        self.date_end = '2019-07-24'
+        self.params = {
+            'date-start': self.date_start,
+            'date-end': self.date_end
+        }
+        self.jql = tools.add_to_jql('', 'created>=%s and created<=%s' % (self.date_start, self.date_end))
         self.test_board_id = 31
-        self.issues = jira_connect.issues_by_board(self.test_board_id)
+        self.issues = jira_connect.issues_by_board(self.test_board_id, jql=self.jql)
 
-        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/{self.test_jql}',
-                                method="POST")
+        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/',
+                                method="POST", params=self.params)
 
         self.assertEqual(st.HTTP_200_OK, response.status_code)
 
@@ -87,11 +95,13 @@ class DateFilteredRecordTest(APITestCase):
 class TypeFilteredRecordTest(APITestCase):
 
     def test_filtered_list_issues(self):
-        self.test_jql = '?issue-type=story'
+        self.issue_type = 'story'
+        self.params = {'issue-type': self.issue_type}
+        self.jql = tools.add_to_jql('', 'issuetype=%s' % self.issue_type)
         self.test_board_id = 31
-        self.issues = jira_connect.issues_by_board(self.test_board_id)
+        self.issues = jira_connect.issues_by_board(self.test_board_id, jql=self.jql)
 
-        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/{self.test_jql}',
-                                method="POST")
+        response = send_request(f'/api/v1/boards/{self.test_board_id}/issues/',
+                                method="POST", params=self.params)
 
         self.assertEqual(st.HTTP_200_OK, response.status_code)

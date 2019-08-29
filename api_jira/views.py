@@ -1,4 +1,5 @@
 from django.http import Http404
+from jira import JIRAError
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -56,8 +57,8 @@ class IssuesViewSet(APIView):
 
     def date_filter(self):
         start = self.request.query_params.get('date-start', None)
-
         end = self.request.query_params.get('date-end', None)
+
         if end:
             end = datetime.date(int(end.split('-')[0]), int(end.split('-')[1]),
                                 int(end.split('-')[2])) + datetime.timedelta(days=1)
@@ -72,11 +73,10 @@ class IssuesViewSet(APIView):
         self.filters()
         try:
             issues = tools.jira_connect.issues_by_board(pk, jql=self.jql)
-            serializer = IssueSerializer(instance=issues, many=True)
-            return Response(serializer.data)
-
-        except Exception as error:
-            return Response(error.args.__getitem__(1))
+        except JIRAError as error:
+            return Response({'error': error.text, 'type': 'JIRA_ERROR'}, status=error.status_code)
+        serializer = IssueSerializer(instance=issues, many=True)
+        return Response(serializer.data)
 
     # record list of issues (filtered or all)
     def post(self, request, pk):
@@ -94,8 +94,8 @@ class IssuesViewSet(APIView):
 
             # create url of tab sheet
             tab_url = '%s/edit#gid=%d' % (tools.sheet.url, tab_sheet.id)
+        except JIRAError as error:
+            return Response({'error': error.text, 'type': 'JIRA_ERROR'}, status=error.status_code)
 
-            return Response({'link': tab_url, 'sheet': serializer_tab_sheet.data, 'issues': serializer.data})
+        return Response({'link': tab_url, 'sheet': serializer_tab_sheet.data, 'issues': serializer.data})
 
-        except Exception as error:
-            return Response(error.args.__getitem__(1))
