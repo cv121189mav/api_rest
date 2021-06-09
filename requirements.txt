@@ -19,7 +19,7 @@ cryptography==2.7
 daphne==2.3.0
 dateparser==0.7.1
 defusedxml==0.6.0
-Django==2.2.4
+Django==2.2.22
 django-channels==0.7.0
 djangorestframework==3.10.2
 google-api-python-client==1.7.10
