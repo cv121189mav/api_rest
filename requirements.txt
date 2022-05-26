@@ -59,7 +59,7 @@ six==1.12.0
 snaptime==0.2.4
 sqlparse==0.3.0
 threaded==4.0.3
-Twisted==19.7.0
+Twisted==22.4.0
 txaio==18.8.1
 typing==3.7.4
 tzlocal==2.0.0
